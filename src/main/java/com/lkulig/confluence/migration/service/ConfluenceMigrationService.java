@@ -1,17 +1,14 @@
 package com.lkulig.confluence.migration.service;
 
 import com.google.common.base.Optional;
+import com.lkulig.confluence.client.ConfluenceClient;
 import com.lkulig.confluence.client.attachment.ConfluenceAttachment;
 import com.lkulig.confluence.client.page.ConfluencePage;
 import com.lkulig.confluence.client.page.summary.ConfluencePageSummary;
 import com.lkulig.confluence.migration.AttachmentCreator;
-import com.lkulig.confluence.client.ConfluenceClient;
 import com.lkulig.confluence.migration.page.ConfluenceHomePageManager;
 import com.lkulig.confluence.migration.page.ConfluencePageCreator;
 import com.lkulig.confluence.migration.util.progress.ProgressLogger;
-import org.codehaus.swizzle.confluence.Attachment;
-import org.codehaus.swizzle.confluence.Page;
-import org.codehaus.swizzle.confluence.PageSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +21,8 @@ import java.util.List;
 public class ConfluenceMigrationService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfluenceMigrationService.class);
-    private static final String AIDA_DAM = "AIDA DAM XW";
+    @Value("${confluence.from.home.page.name}")
+    private String sourceHomePage;
     @Autowired
     @Qualifier(value = "confluenceFromClient")
     private ConfluenceClient source;
@@ -46,14 +44,14 @@ public class ConfluenceMigrationService {
         destination.login();
         source.login();
 
-        LOG.info("removing all pages from {}", AIDA_DAM);
-        destinationHomePageManager.load(AIDA_DAM);
+        LOG.info("removing all pages from {}", sourceHomePage);
+        destinationHomePageManager.load(sourceHomePage);
         destinationHomePageManager.removeAll();
 
-        Optional<ConfluencePage> destinationPage = destination.getPage(confluenceToSpaceName, AIDA_DAM);
+        Optional<ConfluencePage> destinationPage = destination.getPage(confluenceToSpaceName, sourceHomePage);
         Optional<ConfluencePage> home = source.getPage(confluenceFromSpaceName, "Home");
 
-        if(home.isPresent() && destinationPage.isPresent()) {
+        if (home.isPresent() && destinationPage.isPresent()) {
             List<ConfluencePageSummary> sourcePages = source.getChildrenOf(home.get());
             for (ConfluencePageSummary summary : sourcePages) {
                 migrate(summary, source, destination, destinationPage.get().id());
@@ -68,7 +66,7 @@ public class ConfluenceMigrationService {
         LOG.info("migrating page id:[{}] , title:[{}]", pageSummary.id(), pageSummary.title());
         Optional<ConfluencePage> sourcePage = source.getPage(pageSummary.id());
 
-        if(sourcePage.isPresent()) {
+        if (sourcePage.isPresent()) {
             Optional<ConfluencePage> createdPage;
             if (!destination.pageExists(confluenceToSpaceName, sourcePage.get().title())) {
                 ConfluencePage newPage = pageCreator.createFrom(sourcePage.get(), parentId, confluenceToSpaceName);
@@ -96,15 +94,11 @@ public class ConfluenceMigrationService {
     }
 
     private void exportAttachment(ConfluenceAttachment attachment, String pageId) {
-        try {
-            LOG.info("migrating attachment id:[{}],  page id:[{}]", attachment.fileName(), pageId);
-            ConfluenceAttachment attachmentToExport = attachmentCreator.createFrom(attachment, pageId);
-            Optional<byte[]> attachmentData = source.getAttachmentData(attachment.pageId(), attachment.fileName(), "0");
-            if(attachmentData.isPresent()) {
-                destination.addAttachment(attachmentToExport, attachmentData.get());
-            }
-        } catch (Exception e) {
-            LOG.info("Failed to export attachment because: {}", e.getCause());
+        LOG.info("migrating attachment id:[{}],  page id:[{}]", attachment.fileName(), pageId);
+        ConfluenceAttachment attachmentToExport = attachmentCreator.createFrom(attachment, pageId);
+        Optional<byte[]> attachmentData = source.getAttachmentData(attachment.pageId(), attachment.fileName(), "0");
+        if (attachmentData.isPresent()) {
+            destination.addAttachment(attachmentToExport, attachmentData.get());
         }
     }
 }
