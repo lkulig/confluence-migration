@@ -3,6 +3,9 @@ package com.lkulig.confluence.migration.page;
 import static com.google.common.base.Optional.absent;
 import com.google.common.base.Optional;
 import com.lkulig.confluence.client.ConfluenceClient;
+import com.lkulig.confluence.client.page.ConfluencePage;
+import com.lkulig.confluence.client.page.summary.ConfluencePageSummary;
+import com.lkulig.confluence.client.page.summary.ConfluencePageSummaryFunctions;
 import org.codehaus.swizzle.confluence.Page;
 import org.codehaus.swizzle.confluence.PageSummary;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +24,7 @@ public class ConfluenceHomePageManager {
     private ConfluenceHomePageCreator confluenceHomePageCreator;
     @Value("${confluence.to.space.name}")
     private String spaceName;
-    private Optional<Page> homePage = absent();
+    private Optional<ConfluencePage> homePage = absent();
 
     public void createHomePage(String homePageName) {
         if (homePage == null) {
@@ -29,7 +32,7 @@ public class ConfluenceHomePageManager {
         }
     }
 
-    public Optional<Page> load(String homePageName) {
+    public Optional<ConfluencePage> load(String homePageName) {
         if (homePage == null) {
             homePage = confluenceClient.getPage(spaceName, homePageName);
         }
@@ -43,15 +46,15 @@ public class ConfluenceHomePageManager {
         }
     }
 
-    private void removeDescendantsOf(PageSummary page) {
-        List<PageSummary> childPages = confluenceClient.getDescendentsOf(page);
-        for (PageSummary childPage : childPages) {
+    private void removeDescendantsOf(ConfluencePage page) {
+        List<ConfluencePageSummary> childPages = confluenceClient.getDescendentsOf(page);
+        for (ConfluencePageSummary childPage : childPages) {
             confluenceClient.removePage(childPage);
         }
     }
 
-    private void removeContentFrom(Page homePage) {
-        homePage.setContent("");
+    private void removeContentFrom(ConfluencePage homePage) {
+        homePage.removeContent();
         confluenceClient.addOrUpdatePage(homePage);
     }
 }

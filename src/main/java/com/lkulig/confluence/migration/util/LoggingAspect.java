@@ -1,13 +1,13 @@
 package com.lkulig.confluence.migration.util;
 
 import com.lkulig.confluence.client.ConfluenceClient;
+import com.lkulig.confluence.client.page.summary.ConfluencePageSummary;
 import com.lkulig.confluence.migration.util.progress.ProgressLogger;
 import com.lkulig.confluence.migration.util.scheduler.Scheduler;
 import com.lkulig.confluence.migration.util.scheduler.SchedulerFactory;
 import com.lkulig.confluence.migration.util.scheduler.job.JobDetailFactory;
 import com.lkulig.confluence.migration.util.scheduler.trigger.TriggerFactory;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.codehaus.swizzle.confluence.PageSummary;
 import org.quartz.CronTrigger;
 import org.quartz.JobDetail;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +33,7 @@ public class LoggingAspect {
         CronTrigger trigger = TriggerFactory.create("exportProgressLoggingTrigger", expression);
 
         source.login();
-        List<PageSummary> sourcePages = source.getAllPagesOf(confluenceFromSpaceName);
+        List<ConfluencePageSummary> sourcePages = source.getAllPagesOf(confluenceFromSpaceName);
 
         ProgressLogger.setTotalPageCount(sourcePages.size());
 

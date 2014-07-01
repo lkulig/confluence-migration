@@ -1,10 +1,13 @@
 package com.lkulig.confluence.migration.service;
 
 import com.google.common.base.Optional;
+import com.lkulig.confluence.client.attachment.ConfluenceAttachment;
+import com.lkulig.confluence.client.page.ConfluencePage;
+import com.lkulig.confluence.client.page.summary.ConfluencePageSummary;
 import com.lkulig.confluence.migration.AttachmentCreator;
 import com.lkulig.confluence.client.ConfluenceClient;
 import com.lkulig.confluence.migration.page.ConfluenceHomePageManager;
-import com.lkulig.confluence.migration.page.PageCreator;
+import com.lkulig.confluence.migration.page.ConfluencePageCreator;
 import com.lkulig.confluence.migration.util.progress.ProgressLogger;
 import org.codehaus.swizzle.confluence.Attachment;
 import org.codehaus.swizzle.confluence.Page;
@@ -33,7 +36,7 @@ public class ConfluenceMigrationService {
     @Value("${confluence.to.space.name}")
     private String confluenceToSpaceName;
     @Autowired
-    private PageCreator pageCreator;
+    private ConfluencePageCreator pageCreator;
     @Autowired
     private ConfluenceHomePageManager destinationHomePageManager;
     @Autowired
@@ -47,13 +50,13 @@ public class ConfluenceMigrationService {
         destinationHomePageManager.load(AIDA_DAM);
         destinationHomePageManager.removeAll();
 
-        Optional<Page> destinationPage = destination.getPage(confluenceToSpaceName, AIDA_DAM);
-        Optional<Page> home = source.getPage(confluenceFromSpaceName, "Home");
+        Optional<ConfluencePage> destinationPage = destination.getPage(confluenceToSpaceName, AIDA_DAM);
+        Optional<ConfluencePage> home = source.getPage(confluenceFromSpaceName, "Home");
 
         if(home.isPresent() && destinationPage.isPresent()) {
-            List<PageSummary> sourcePages = source.getChildrenOf(home.get());
-            for (PageSummary summary : sourcePages) {
-                migrate(summary, source, destination, destinationPage.get().getId());
+            List<ConfluencePageSummary> sourcePages = source.getChildrenOf(home.get());
+            for (ConfluencePageSummary summary : sourcePages) {
+                migrate(summary, source, destination, destinationPage.get().id());
             }
         }
 
@@ -61,42 +64,42 @@ public class ConfluenceMigrationService {
         destination.logout();
     }
 
-    private void migrate(PageSummary pageSummary, ConfluenceClient source, ConfluenceClient destination, String parentId) {
-        LOG.info("migrating page id:[{}] , title:[{}]", pageSummary.getId(), pageSummary.getTitle());
-        Optional<Page> sourcePage = source.getPage(pageSummary.getId());
+    private void migrate(ConfluencePageSummary pageSummary, ConfluenceClient source, ConfluenceClient destination, String parentId) {
+        LOG.info("migrating page id:[{}] , title:[{}]", pageSummary.id(), pageSummary.title());
+        Optional<ConfluencePage> sourcePage = source.getPage(pageSummary.id());
 
         if(sourcePage.isPresent()) {
-            Optional<Page> createdPage;
-            if (!destination.pageExists(confluenceToSpaceName, sourcePage.get().getTitle())) {
-                Page newPage = pageCreator.createFrom(sourcePage.get(), parentId, confluenceToSpaceName);
+            Optional<ConfluencePage> createdPage;
+            if (!destination.pageExists(confluenceToSpaceName, sourcePage.get().title())) {
+                ConfluencePage newPage = pageCreator.createFrom(sourcePage.get(), parentId, confluenceToSpaceName);
                 createdPage = destination.addOrUpdatePage(newPage);
             } else {
-                createdPage = destination.getPage(confluenceToSpaceName, sourcePage.get().getTitle());
+                createdPage = destination.getPage(confluenceToSpaceName, sourcePage.get().title());
             }
 
             ProgressLogger.incrementProcessedPages();
 
-            exportAttachments(sourcePage.get(), createdPage.get().getId());
-            List<PageSummary> sourcePageChildren = source.getChildrenOf(sourcePage.get());
+            exportAttachments(sourcePage.get(), createdPage.get().id());
+            List<ConfluencePageSummary> sourcePageChildren = source.getChildrenOf(sourcePage.get());
 
-            for (PageSummary childPage : sourcePageChildren) {
-                migrate(childPage, source, destination, createdPage.get().getId());
+            for (ConfluencePageSummary childPage : sourcePageChildren) {
+                migrate(childPage, source, destination, createdPage.get().id());
             }
         }
     }
 
-    private void exportAttachments(Page pageSummary, String pageId) {
-        List<Attachment> attachments = source.getAttachments(pageSummary.getId());
-        for (Attachment attachment : attachments) {
-            exportAttachment(attachment, pageId);
+    private void exportAttachments(ConfluencePage sourcePage, String createdPageId) {
+        List<ConfluenceAttachment> attachments = source.getAttachments(sourcePage.id());
+        for (ConfluenceAttachment attachment : attachments) {
+            exportAttachment(attachment, createdPageId);
         }
     }
 
-    private void exportAttachment(Attachment attachment, String pageId) {
+    private void exportAttachment(ConfluenceAttachment attachment, String pageId) {
         try {
-            LOG.info("migrating attachment id:[{}],  page id:[{}]", attachment.getFileName(), pageId);
-            Attachment attachmentToExport = attachmentCreator.createFrom(attachment, pageId);
-            Optional<byte[]> attachmentData = source.getAttachmentData(attachment.getPageId(), attachment.getFileName(), "0");
+            LOG.info("migrating attachment id:[{}],  page id:[{}]", attachment.fileName(), pageId);
+            ConfluenceAttachment attachmentToExport = attachmentCreator.createFrom(attachment, pageId);
+            Optional<byte[]> attachmentData = source.getAttachmentData(attachment.pageId(), attachment.fileName(), "0");
             if(attachmentData.isPresent()) {
                 destination.addAttachment(attachmentToExport, attachmentData.get());
             }

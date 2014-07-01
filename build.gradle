@@ -20,7 +20,6 @@ dependencies {
 
     compile 'org.quartz-scheduler:quartz:2.2.1'
     compile 'org.apache.commons:commons-collections4:4.0'
-    compile 'org.codehaus.swizzle:swizzle-confluence:1.6.2'
     compile 'com.lkulig.confluence:confluence-client:1.0'
 
     compile 'org.slf4j:slf4j-api:1.7.5'
