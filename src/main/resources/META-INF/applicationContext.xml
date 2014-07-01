@@ -1,0 +1,52 @@
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context-3.1.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <context:property-placeholder location="classpath:app.properties"/>
+    <context:component-scan base-package="com.lkulig.confluence.migration"/>
+    <context:annotation-config/>
+    <aop:aspectj-autoproxy/>
+
+    <bean id="confluenceFrom" class="org.codehaus.swizzle.confluence.Confluence">
+        <constructor-arg index="0" value="${confluence.from.uri}" />
+    </bean>
+
+    <bean id="confluenceFromClientConfig" class="com.lkulig.confluence.client.ConfluenceClientConfig">
+        <constructor-arg index="0" value="${confluence.from.user}" />
+        <constructor-arg index="1" value="${confluence.from.password}" />
+    </bean>
+
+    <bean id="confluenceFromClient" class="com.lkulig.confluence.client.ConfluenceClient">
+        <constructor-arg index="0" ref="confluenceFromClientConfig" />
+        <constructor-arg index="1" ref="confluenceFrom" />
+    </bean>
+
+    <bean id="confluenceTo" class="org.codehaus.swizzle.confluence.Confluence">
+        <constructor-arg index="0" value="${confluence.to.uri}" />
+    </bean>
+
+    <bean id="confluenceToClientConfig" class="com.lkulig.confluence.client.ConfluenceClientConfig">
+        <constructor-arg index="0" value="${confluence.to.user}" />
+        <constructor-arg index="1" value="${confluence.to.password}" />
+    </bean>
+
+    <bean id="confluenceToClient" class="com.lkulig.confluence.client.ConfluenceClient">
+        <constructor-arg index="0" ref="confluenceToClientConfig" />
+        <constructor-arg index="1" ref="confluenceTo" />
+    </bean>
+
+    <bean id="loggingAspect" class="com.lkulig.confluence.migration.util.LoggingAspect"/>
+    <aop:config>
+        <aop:aspect ref="loggingAspect">
+            <aop:pointcut id="pointCutAround"
+                          expression="execution(* com.lkulig.confluence.migration.service.ConfluenceMigrationService.*(..))"/>
+            <aop:around method="monitorExportProgress" pointcut-ref="pointCutAround"/>
+        </aop:aspect>
+    </aop:config>
+</beans>

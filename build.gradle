@@ -1,0 +1,40 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+
+group = 'com.lkulig.confluence'
+version = '1.0'
+sourceCompatibility = 1.7
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    compile 'org.springframework:spring-core:4.0.5.RELEASE'
+    compile 'org.springframework:spring-context:4.0.5.RELEASE'
+    compile 'org.springframework:spring-expression:4.0.5.RELEASE'
+    compile 'org.springframework:spring-aspects:4.0.5.RELEASE'
+    compile 'org.springframework:spring-aop:4.0.5.RELEASE'
+    compile 'org.springframework:spring-beans:4.0.5.RELEASE'
+
+    compile 'org.quartz-scheduler:quartz:2.2.1'
+    compile 'org.apache.commons:commons-collections4:4.0'
+    compile 'org.codehaus.swizzle:swizzle-confluence:1.6.2'
+    compile 'com.lkulig.confluence:confluence-client:1.0'
+
+    compile 'org.slf4j:slf4j-api:1.7.5'
+    compile 'org.slf4j:slf4j-simple:1.7.5'
+    compile 'org.apache.commons:commons-lang3:3.1'
+    compile 'com.google.guava:guava:17.0'
+
+    testCompile 'org.mockito:mockito-all:1.9.5'
+    testCompile 'org.assertj:assertj-core:1.6.1'
+    testCompile 'junit:junit:4.11'
+}
+
+version = '1.0'
+
+jar {
+    manifest.attributes provider: 'gradle'
+}
