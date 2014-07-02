@@ -41,6 +41,13 @@
         <constructor-arg index="1" ref="confluenceTo" />
     </bean>
 
+    <bean id="confluenceExportProperties" class="com.lkulig.confluence.migration.properties.ConfluenceExportProperties">
+        <constructor-arg index="0" value="${confluence.from.home.page.name}"/>
+        <constructor-arg index="1" value="${confluence.to.home.page.name}"/>
+        <constructor-arg index="2" value="${confluence.from.space.name}"/>
+        <constructor-arg index="3" value="${confluence.to.space.name}"/>
+    </bean>
+
     <bean id="loggingAspect" class="com.lkulig.confluence.migration.util.LoggingAspect"/>
     <aop:config>
         <aop:aspect ref="loggingAspect">

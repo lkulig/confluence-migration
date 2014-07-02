@@ -34,6 +34,7 @@ public class LoggingAspect {
 
         source.login();
         List<ConfluencePageSummary> sourcePages = source.getAllPagesOf(confluenceFromSpaceName);
+        source.logout();
 
         ProgressLogger.setTotalPageCount(sourcePages.size());
 

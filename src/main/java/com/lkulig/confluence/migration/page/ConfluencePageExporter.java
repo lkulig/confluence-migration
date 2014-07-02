@@ -5,12 +5,12 @@ import com.lkulig.confluence.client.ConfluenceClient;
 import com.lkulig.confluence.client.page.ConfluencePage;
 import com.lkulig.confluence.client.page.summary.ConfluencePageSummary;
 import com.lkulig.confluence.migration.attachment.ConfluenceAttachmentExporter;
+import com.lkulig.confluence.migration.properties.ConfluenceExportProperties;
 import com.lkulig.confluence.migration.util.progress.ProgressLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import java.util.List;
 
@@ -18,14 +18,9 @@ import java.util.List;
 public class ConfluencePageExporter {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfluencePageExporter.class);
-    @Value("${confluence.from.home.page.name}")
-    private String sourceHomePage;
-    @Value("${confluence.to.home.page.name}")
-    private String destinationHomePage;
-    @Value("${confluence.from.space.name}")
-    private String confluenceFromSpaceName;
-    @Value("${confluence.to.space.name}")
-    private String confluenceToSpaceName;
+
+    @Autowired
+    private ConfluenceExportProperties properties;
     @Autowired
     @Qualifier(value = "confluenceToClient")
     private ConfluenceClient destination;
@@ -40,9 +35,8 @@ public class ConfluencePageExporter {
     private ConfluenceAttachmentExporter confluenceAttachmentExporter;
 
     public void export() {
-        destinationHomePageManager.load(destinationHomePage);
-        Optional<ConfluencePage> destinationPage = destination.getPage(confluenceToSpaceName, destinationHomePage);
-        Optional<ConfluencePage> home = source.getPage(confluenceFromSpaceName, sourceHomePage);
+        destinationHomePageManager.load(properties.destinationHomePage());
+        Optional<ConfluencePage> destinationPage = destination.getPage(properties.destinationSpaceName(), properties.destinationHomePage());
         if (home.isPresent() && destinationPage.isPresent()) {
             export(destinationPage, home);
         }
@@ -61,11 +55,11 @@ public class ConfluencePageExporter {
 
        if (sourcePage.isPresent()) {
            Optional<ConfluencePage> createdPage;
-           if (!destination.pageExists(confluenceToSpaceName, sourcePage.get().title())) {
-               ConfluencePage newPage = pageCreator.createFrom(sourcePage.get(), parentId, confluenceToSpaceName);
+           if (!destination.pageExists(properties.destinationSpaceName(), sourcePage.get().title())) {
+               ConfluencePage newPage = pageCreator.createFrom(sourcePage.get(), parentId, properties.destinationSpaceName());
                createdPage = destination.addOrUpdatePage(newPage);
            } else {
-               createdPage = destination.getPage(confluenceToSpaceName, sourcePage.get().title());
+               createdPage = destination.getPage(properties.destinationSpaceName(), sourcePage.get().title());
            }
 
            ProgressLogger.incrementProcessedPages();

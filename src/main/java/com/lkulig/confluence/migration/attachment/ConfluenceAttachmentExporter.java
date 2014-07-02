@@ -4,7 +4,6 @@ import com.google.common.base.Optional;
 import com.lkulig.confluence.client.ConfluenceClient;
 import com.lkulig.confluence.client.attachment.ConfluenceAttachment;
 import com.lkulig.confluence.client.page.ConfluencePage;
-import com.lkulig.confluence.migration.AttachmentCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +16,7 @@ public class ConfluenceAttachmentExporter {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfluenceAttachmentExporter.class);
     @Autowired
-    private AttachmentCreator attachmentCreator;
+    private ConfluenceAttachmentCreator attachmentCreator;
     @Autowired
     @Qualifier(value = "confluenceToClient")
     private ConfluenceClient destination;
@@ -39,6 +38,5 @@ public class ConfluenceAttachmentExporter {
         if (attachmentData.isPresent()) {
             destination.addAttachment(attachmentToExport, attachmentData.get());
         }
-
     }
 }
